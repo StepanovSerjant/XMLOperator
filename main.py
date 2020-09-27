@@ -1,79 +1,57 @@
-import datetime
 import os
-import pathlib
 import sys
 import time
 
-from modules import logger
-from modules import xml_operations
-
+import services
+from utils.logger import Logger
+from utils.xml_operations import XmlOperator
 
 
 def main():
+    log = Logger()
+
+    # получение путей к файлам для трансформации
+    paths_dict = dict()
     extensions = ['xml', 'xsd', 'xsl']
-    paths_dict = {}
-
-    log = logger.Logger()
-
     for extension in extensions:
-        path_valid = False
-        step = 'Валидация пути к {} файлу.\n'.format(extension.upper())
+        step = f'Валидация пути к {extension.upper()} файлу.\n'
         log.info_message(step)
-        path = input('Введите абсолютный путь к {} файлу: '.format(extension.upper()))
-
+        
+        path_valid = False
         while path_valid is False:
+            path = input(f'Введите абсолютный путь к {extension.upper()} файлу: ')
             if path == 'exit':
                 sys.exit()
-            if os.path.isfile(path):
-                if pathlib.Path(path).suffix == '.{}'.format(extension):
-                    paths_dict[extension] = path
-                    path_valid = True
-                    log.info_message('Валидация пути {} файла успешно выполнена.\n'.format(extension))
-                    print('Валидация пути {} файла успешно выполнена.\n'.format(extension))
-                else:
-                    error = 'Файл неверного формата! Нужен файл с расширением .{0}!'.format(extension)
-                    print(error)
-                    log.error_message(error)
-                    path = input('Введите абсолютный путь к {} файлу: '.format(extension.upper()))
+            elif services.path_validation(path, extension)['status']:
+                paths_dict[extension] = path
+                path_valid = True
             else:
-                error = 'В адресе вашего пути нет файла или такого файла не существует!\n'
-                print(error)
-                log.error_message(error)
-                path = input('Введите абсолютный путь к {} файлу: '.format(extension.upper()))
-
-    operator = xml_operations.XmlOperator(log)
-
+                error_message = services.path_validation(path, extension)['error_msg']
+                print(error_message)
+                log.error_message(error_message)
+                
+    # Основная логика скрипта
+    operator = XmlOperator(log)
     print('Валидация XML файла по XSD схеме')
     if operator.validate_xml(paths_dict['xml'], paths_dict['xsd']):
-        print('Валидация XML файла по XSD схеме успешно завершена.')
-        print()
+        print('Валидация XML файла по XSD схеме успешно завершена.\n')
         print('Трансформация файла по XSLT.')
         if operator.transform_by_xslt(paths_dict['xsl']):
             print('Трансформация файла по XSLT успешно завершена.')
-            files = os.listdir(os.getcwd() + r'\results')
-            result = operator.result_file(files)
-            path = operator.save_result(result)
+            file_dir = os.path.join(os.getcwd(), 'results')
+            filename = operator.get_xml_filename(file_dir)
+            result_path = operator.save_result(filename)
+            
             print('Новый файл успешно сохранен!')
-            print('Его путь  --  {}'.format(path))
-            print('Сессия завершена.')
-            print()
-            answer = input('Повторить операцию с другими файлами? [ДА,НЕТ]\n')
-            if answer.upper() == 'ДА':
-                print()
-                main()
-            else:
-                print('Всего доброго!')
-                time.sleep(2)
-                sys.exit()
+            print(f'Его путь  --  {result_path}')
+            print('Сессия завершена.\n')
+            return services.restart()
         else:
             print('Трансформация по XSLT не осуществилась из-за ошибки или иной причины.')
-            print('Смотрите лог-файл {}'.format(log.file))
-            print('Его путь  --  {}'.format(log.file_path))
     else:
-        print('Ваш XML файл не прошел валидацию.')
-        print('Смотрите лог-файл {}'.format(log.file))
-        print('Его путь  --  {}'.format(log.file_path))
-
+        print('Валидация XML файла по XSD схеме не осуществилась из-за ошибки или иной причины.')
+    print(f'Смотрите лог-файл {log.file_path}')
+    
     time.sleep(3)
     sys.exit()
 
