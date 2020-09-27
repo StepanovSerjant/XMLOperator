@@ -10,7 +10,7 @@ from utils.xml_operations import XmlOperator
 def main():
     log = Logger()
 
-    # получение путей к файлам для трансформации
+    # Получение путей к файлам для трансформации
     paths_dict = dict()
     extensions = ['xml', 'xsd', 'xsl']
     for extension in extensions:
@@ -30,7 +30,6 @@ def main():
                 print(error_message)
                 log.error_message(error_message)
                 
-    # Основная логика скрипта
     operator = XmlOperator(log)
     print('Валидация XML файла по XSD схеме')
     if operator.validate_xml(paths_dict['xml'], paths_dict['xsd']):

@@ -10,6 +10,7 @@ class XmlOperator:
         self.logger = log
 
     def validate_xml(self, xml, xsd):
+        """ Валидация XML файла """
         self.logger.info_message('Валидация XML файла.')
         try:
             schema_root = etree.parse(xsd)
@@ -29,6 +30,7 @@ class XmlOperator:
             return False
 
     def transform_by_xslt(self, xsl):
+        """ Трансформация файла по XSLT """
         self.logger.info_message('Трансформация файла по XSLT')
         try:
             load_xml = etree.parse(self.xml)
@@ -46,6 +48,7 @@ class XmlOperator:
             return True
 
     def get_xml_filename(self, files):
+        """ Метод получения имени результирующего файла """
         valid_name = False
         while valid_name is False:
             name_xml = input('Введите название преобразованного файла XML: ')
@@ -57,6 +60,7 @@ class XmlOperator:
         return name_xml
 
     def save_result(self, name_xml):
+        """ Метод сохраняющий файл с результатом и возвращающий путь до него """
         # infile = etree.tostring(self.new_xml, pretty_print=True)
         if 'results' not in os.listdir(os.getcwd()):
             os.mkdir('results')
